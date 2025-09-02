@@ -2,7 +2,7 @@
 
 import { useParams } from "next/navigation";
 import { useState } from "react";
-import { uploadPaymentProof } from "@/lib/dummyApi";
+import { uploadPaymentProof } from "@/lib/api";
 
 export default function UploadProofPage() {
   const { orderId } = useParams();
@@ -14,7 +14,6 @@ export default function UploadProofPage() {
     const selected = e.target.files?.[0];
     if (!selected) return;
 
-    // Validasi
     if (!["image/jpeg", "image/png"].includes(selected.type)) {
       setError("File harus JPG/PNG");
       return;
@@ -29,26 +28,26 @@ export default function UploadProofPage() {
     setPreview(URL.createObjectURL(selected));
   };
 
-  const handleUpload = () => {
+  const handleUpload = async () => {
     if (!file) {
       setError("Pilih file dulu");
       return;
     }
-    // Dummy proof URL
-    const proofUrl = "/dummy/" + file.name;
-    uploadPaymentProof(orderId as string, proofUrl);
-    alert("Upload sukses (dummy). Order status → MENUNGGU_KONFIRMASI");
+    try {
+      await uploadPaymentProof(orderId as string, file);
+      alert("Upload sukses!");
+    } catch (err) {
+      console.error(err);
+      alert("Gagal upload");
+    }
   };
 
   return (
     <div className="p-6 max-w-md mx-auto">
       <h1 className="text-xl font-bold mb-4">Upload Bukti Pembayaran</h1>
-      <p className="mb-2 text-gray-700">Order ID: {orderId}</p>
-
       <input type="file" onChange={handleFileChange} className="mb-4" />
 
       {error && <p className="text-red-500 mb-2">{error}</p>}
-
       {preview && (
         <img src={preview} alt="Preview" className="w-48 h-48 mb-4" />
       )}
