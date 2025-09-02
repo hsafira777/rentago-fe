@@ -1,37 +1,34 @@
-// src/app/orders/new/page.tsx
 "use client";
 
 import { useState } from "react";
-import { createOrder } from "@/lib/dummyApi";
-import { Order } from "@/types/order";
+import { createOrder } from "@/lib/api";
 import { useRouter } from "next/navigation";
 
 export default function NewOrderPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
 
-  const handleCreate = () => {
+  const handleCreate = async () => {
     setLoading(true);
-    const newOrder: Order = {
-      id: "order_" + Math.random().toString(36).slice(2, 8),
-      startDate: "2025-10-01",
-      endDate: "2025-10-05",
-      status: "MENUNGGU_PEMBAYARAN",
-      totalPrice: 1500000,
-      property: { id: "prop_999", name: "Test Hotel", city: "Jakarta" },
-      room: { id: "room_999", name: "Standard Room" },
-      payment: { id: "pay_999", paymentMethod: "TRANSFER", status: "PENDING" },
-    };
-    createOrder(newOrder);
-    router.push("/orders");
+    try {
+      await createOrder({
+        roomId: "room_123",
+        startDate: "2025-10-01",
+        endDate: "2025-10-05",
+        paymentMethod: "TRANSFER",
+      });
+      router.push("/orders");
+    } catch (err) {
+      console.error(err);
+      alert("Gagal membuat order");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
     <div className="p-6">
       <h1 className="text-xl font-bold mb-4">New Order</h1>
-      <p className="mb-4 text-gray-600">
-        (Dummy) Klik tombol di bawah untuk membuat order baru
-      </p>
       <button
         onClick={handleCreate}
         disabled={loading}
