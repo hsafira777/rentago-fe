@@ -1,7 +1,7 @@
 // src/lib/api.ts
 import { Order } from "@/types/order";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api";
 
 // Ambil daftar order user
 export async function fetchOrders(): Promise<Order[]> {
