@@ -1,53 +1,115 @@
-// src/lib/api.ts
+// Nurbani
 import { Order } from "@/types/order";
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080/api";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api";
+// Helper umum untuk request
+async function request<T>(
+  endpoint: string,
+  options: RequestInit = {}
+): Promise<T> {
+  const res = await fetch(`${API_URL}${endpoint}`, {
+    ...options,
+    headers: {
+      "Content-Type": "application/json",
+      ...(options.headers || {}),
+    },
+  });
 
-// Ambil daftar order user
-export async function fetchOrders(): Promise<Order[]> {
-  const res = await fetch(`${API_URL}/orders`, { cache: "no-store" });
-  if (!res.ok) throw new Error("Gagal ambil data orders");
+  if (!res.ok) {
+    const error = await res.json().catch(() => ({}));
+    throw new Error(error.message || "Request failed");
+  }
+
   return res.json();
 }
 
-// Buat order baru
-export async function createOrder(data: {
-  roomId: string;
-  startDate: string;
-  endDate: string;
-  paymentMethod: "TRANSFER" | "GATEWAY";
-}): Promise<Order> {
-  const res = await fetch(`${API_URL}/orders`, {
+// ---------------- AUTH ----------------
+export const login = (data: { email: string; password: string }) =>
+  request<{ token: string; user: any }>("/auth/login", {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
     body: JSON.stringify(data),
   });
-  if (!res.ok) throw new Error("Gagal membuat order");
-  return res.json();
-}
 
-// Cancel order
-export async function cancelOrder(orderId: string): Promise<Order> {
-  const res = await fetch(`${API_URL}/orders/${orderId}/cancel`, {
+export const register = (data: {
+  name: string;
+  email: string;
+  password: string;
+  role: string;
+}) =>
+  request("/auth/register", {
     method: "POST",
+    body: JSON.stringify(data),
   });
-  if (!res.ok) throw new Error("Gagal cancel order");
-  return res.json();
-}
 
-// Upload bukti pembayaran
-export async function uploadPaymentProof(
+// ---------------- ORDERS (USER) ----------------
+export const createOrder = (
+  token: string,
+  data: { roomId: string; startDate: string; endDate: string }
+) =>
+  request("/orders", {
+    method: "POST",
+    body: JSON.stringify(data),
+    headers: { Authorization: `Bearer ${token}` },
+  });
+
+export const getUserOrders = (token: string, query = "") =>
+  request(`/orders${query}`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+
+// export const getUserOrders = (token: string, query = "") =>
+//   request<{ orders: Order[]; total: number }>(`/orders${query}`, {
+//     headers: { Authorization: `Bearer ${token}` },
+//   });
+
+export const cancelUserOrder = (token: string, orderId: string) =>
+  request(`/orders/${orderId}/cancel`, {
+    method: "PATCH",
+    headers: { Authorization: `Bearer ${token}` },
+  });
+
+// Upload bukti pembayaran (pakai FormData, jadi fetch manual)
+export const uploadPaymentProof = async (
+  token: string,
   orderId: string,
   file: File
-): Promise<Order> {
+) => {
   const formData = new FormData();
   formData.append("file", file);
 
   const res = await fetch(`${API_URL}/orders/${orderId}/payment-proof`, {
     method: "POST",
+    headers: { Authorization: `Bearer ${token}` },
     body: formData,
   });
 
-  if (!res.ok) throw new Error("Gagal upload bukti pembayaran");
+  if (!res.ok) {
+    const error = await res.json().catch(() => ({}));
+    throw new Error(error.message || "Upload failed");
+  }
+
   return res.json();
-}
+};
+
+// ---------------- ORDERS (TENANT) ----------------
+export const getTenantOrders = (token: string, query = "") =>
+  request(`/orders/tenant/list${query}`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+
+export const confirmTenantPayment = (
+  token: string,
+  orderId: string,
+  accept: boolean
+) =>
+  request(`/orders/${orderId}/confirm`, {
+    method: "PATCH",
+    body: JSON.stringify({ accept }),
+    headers: { Authorization: `Bearer ${token}` },
+  });
+
+export const cancelTenantOrder = (token: string, orderId: string) =>
+  request(`/orders/${orderId}/cancel-tenant`, {
+    method: "PATCH",
+    headers: { Authorization: `Bearer ${token}` },
+  });
