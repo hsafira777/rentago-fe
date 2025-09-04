@@ -1,8 +1,23 @@
 // Nurbani
-import { Order } from "@/types/order";
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080/api";
 
-// Helper umum untuk request
+// ================= TYPES =================
+export type Order = {
+  id: string;
+  status: string;
+  totalPrice: number;
+  startDate: string;
+  endDate: string;
+  user?: { name: string; email: string };
+  payment?: { proofUrl?: string; status: string };
+};
+
+export type OrdersResponse = {
+  orders: Order[];
+  total: number;
+};
+
+// ================= HELPER =================
 async function request<T>(
   endpoint: string,
   options: RequestInit = {}
@@ -23,7 +38,7 @@ async function request<T>(
   return res.json();
 }
 
-// ---------------- AUTH ----------------
+// ================= AUTH =================
 export const login = (data: { email: string; password: string }) =>
   request<{ token: string; user: any }>("/auth/login", {
     method: "POST",
@@ -41,26 +56,24 @@ export const register = (data: {
     body: JSON.stringify(data),
   });
 
-// ---------------- ORDERS (USER) ----------------
+// ================= USER ORDERS =================
 export const createOrder = (
   token: string,
   data: { roomId: string; startDate: string; endDate: string }
 ) =>
-  request("/orders", {
+  request<Order>("/orders", {
     method: "POST",
     body: JSON.stringify(data),
     headers: { Authorization: `Bearer ${token}` },
   });
 
-export const getUserOrders = (token: string, query = "") =>
+export const getUserOrders = (
+  token: string,
+  query = ""
+): Promise<OrdersResponse> =>
   request(`/orders${query}`, {
     headers: { Authorization: `Bearer ${token}` },
   });
-
-// export const getUserOrders = (token: string, query = "") =>
-//   request<{ orders: Order[]; total: number }>(`/orders${query}`, {
-//     headers: { Authorization: `Bearer ${token}` },
-//   });
 
 export const cancelUserOrder = (token: string, orderId: string) =>
   request(`/orders/${orderId}/cancel`, {
@@ -68,7 +81,6 @@ export const cancelUserOrder = (token: string, orderId: string) =>
     headers: { Authorization: `Bearer ${token}` },
   });
 
-// Upload bukti pembayaran (pakai FormData, jadi fetch manual)
 export const uploadPaymentProof = async (
   token: string,
   orderId: string,
@@ -91,8 +103,11 @@ export const uploadPaymentProof = async (
   return res.json();
 };
 
-// ---------------- ORDERS (TENANT) ----------------
-export const getTenantOrders = (token: string, query = "") =>
+// ================= TENANT ORDERS =================
+export const getTenantOrders = (
+  token: string,
+  query = ""
+): Promise<OrdersResponse> =>
   request(`/orders/tenant/list${query}`, {
     headers: { Authorization: `Bearer ${token}` },
   });
