@@ -2,13 +2,13 @@
 
 import { useEffect, useState } from "react";
 import {
-  getUserOrders,
-  cancelUserOrder,
-  uploadPaymentProof,
+  getTenantOrders,
+  confirmTenantPayment,
+  cancelTenantOrder,
   Order,
 } from "@/lib/api";
 
-export default function OrdersPage() {
+export default function TenantOrdersPage() {
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const [token, setToken] = useState<string | null>(null);
@@ -24,7 +24,7 @@ export default function OrdersPage() {
   const fetchOrders = async (t: string) => {
     setLoading(true);
     try {
-      const res = await getUserOrders(t); // res: OrdersResponse
+      const res = await getTenantOrders(t); // res: OrdersResponse
       setOrders(res.orders);
     } catch (err: any) {
       alert(err.message);
@@ -32,25 +32,22 @@ export default function OrdersPage() {
     setLoading(false);
   };
 
-  const handleCancel = async (id: string) => {
+  const handleConfirm = async (id: string, accept: boolean) => {
     if (!token) return;
     try {
-      await cancelUserOrder(token, id);
-      alert("Order dibatalkan");
+      await confirmTenantPayment(token, id, accept);
+      alert(accept ? "Pembayaran dikonfirmasi" : "Pembayaran ditolak");
       fetchOrders(token);
     } catch (err: any) {
       alert(err.message);
     }
   };
 
-  const handleUploadProof = async (
-    id: string,
-    e: React.ChangeEvent<HTMLInputElement>
-  ) => {
-    if (!token || !e.target.files?.[0]) return;
+  const handleCancelOrder = async (id: string) => {
+    if (!token) return;
     try {
-      await uploadPaymentProof(token, id, e.target.files[0]);
-      alert("Bukti bayar berhasil diupload");
+      await cancelTenantOrder(token, id);
+      alert("Pesanan dibatalkan");
       fetchOrders(token);
     } catch (err: any) {
       alert(err.message);
@@ -61,7 +58,7 @@ export default function OrdersPage() {
 
   return (
     <div className="p-6">
-      <h1 className="text-xl font-bold mb-4">Daftar Pesanan Saya</h1>
+      <h1 className="text-xl font-bold mb-4">Pesanan Tenant</h1>
 
       {orders.length === 0 && <p>Tidak ada pesanan.</p>}
 
@@ -81,6 +78,9 @@ export default function OrdersPage() {
               <b>Tanggal:</b> {order.startDate.slice(0, 10)} →{" "}
               {order.endDate.slice(0, 10)}
             </p>
+            <p>
+              <b>User:</b> {order.user?.name} ({order.user?.email})
+            </p>
 
             {order.payment?.proofUrl && (
               <p>
@@ -96,20 +96,30 @@ export default function OrdersPage() {
             )}
 
             <div className="mt-2 flex gap-2">
-              {order.status === "MENUNGGU_PEMBAYARAN" && (
+              {order.status === "MENUNGGU_KONFIRMASI" && (
                 <>
                   <button
-                    onClick={() => handleCancel(order.id)}
-                    className="px-3 py-1 bg-red-500 text-white rounded"
+                    onClick={() => handleConfirm(order.id, true)}
+                    className="px-3 py-1 bg-green-500 text-white rounded"
                   >
-                    Batalkan
+                    Konfirmasi
                   </button>
-                  <input
-                    type="file"
-                    accept="image/png,image/jpeg"
-                    onChange={(e) => handleUploadProof(order.id, e)}
-                  />
+                  <button
+                    onClick={() => handleConfirm(order.id, false)}
+                    className="px-3 py-1 bg-yellow-500 text-white rounded"
+                  >
+                    Tolak
+                  </button>
                 </>
+              )}
+
+              {order.status === "MENUNGGU_PEMBAYARAN" && (
+                <button
+                  onClick={() => handleCancelOrder(order.id)}
+                  className="px-3 py-1 bg-red-500 text-white rounded"
+                >
+                  Batalkan
+                </button>
               )}
             </div>
           </li>
