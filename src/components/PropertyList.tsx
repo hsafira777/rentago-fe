@@ -1,11 +1,13 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import type  Property  from "@/interface/property";
+import { useRouter } from "next/navigation";
+import type Property from "@/interface/property";
 
 export default function PropertyList() {
   const [properties, setProperties] = useState<Property[]>([]);
   const [loading, setLoading] = useState(true);
+  const router = useRouter();
 
   useEffect(() => {
     async function fetchProperties() {
@@ -60,7 +62,10 @@ export default function PropertyList() {
             ) : (
               <p className="text-gray-500">Harga belum tersedia</p>
             )}
-            <button className="mt-3 w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700">
+            <button
+              onClick={() => router.push(`/properties/${p.id}`)}
+              className="mt-3 w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700"
+            >
               Lihat Detail
             </button>
           </div>
