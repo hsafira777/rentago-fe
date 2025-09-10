@@ -29,7 +29,6 @@ export async function registerUser(data: {
   email: string;
   password: string;
   role: string;
-  referralCode: string | null;
 }) {
   try {
     const response = await axios.post(`${API}/register`, data);

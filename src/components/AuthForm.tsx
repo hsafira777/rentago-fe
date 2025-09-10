@@ -1,9 +1,11 @@
+"use client";
+
 import { useForm } from "react-hook-form";
-import { useRouter } from "next/router";
-import { Role, Mode } from "../types/user";
+import { Role, Mode } from "@/types/user";
 
 type FormValues = {
   email: string;
+  name?: string;
   password?: string;
 };
 
@@ -18,21 +20,37 @@ export default function AuthForm({
   onSuccess: (msg: string) => void;
   onError: (msg: string) => void;
 }) {
-  const router = useRouter();
   const { register, handleSubmit, reset } = useForm<FormValues>();
 
-  const onSubmit = (data: FormValues) => {
-    if (mode === "login") {
-      if (data.email === "test@example.com" && data.password === "123456") {
-        router.push(`/${role}/dashboard`);
-        onSuccess("Login berhasil!");
+  const onSubmit = async (data: FormValues) => {
+    try {
+      let res: Response;
+      if (mode === "login") {
+        res = await fetch("http://localhost:8080/api/auth/login", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email: data.email, password: data.password }),
+        });
       } else {
-        onError("Email atau password salah");
+        res = await fetch("http://localhost:8080/api/auth/register", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email: data.email, name: data.name, role }),
+        });
       }
-    } else {
-      onSuccess(`Link verifikasi sudah dikirim ke ${data.email}`);
+
+      const result = await res.json();
+      if (!res.ok) throw new Error(result.message);
+
+      onSuccess(
+        result.message ||
+          (mode === "login" ? "Login berhasil!" : "Register berhasil!")
+      );
+      reset(); // reset hanya jika sukses
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : "Terjadi error";
+      onError(errorMessage);
     }
-    reset();
   };
 
   return (
@@ -43,6 +61,14 @@ export default function AuthForm({
         {...register("email", { required: true })}
         className="border rounded p-2"
       />
+      {mode === "register" && (
+        <input
+          type="text"
+          placeholder="Name"
+          {...register("name", { required: true })}
+          className="border rounded p-2"
+        />
+      )}
       {mode === "login" && (
         <input
           type="password"
