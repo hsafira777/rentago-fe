@@ -8,7 +8,7 @@ type AuthState = {
 };
 
 type AuthActions = {
-  onSuccess: (user: UserAuth, token: string) => void;
+  onSuccess: (user: UserAuth) => void; // ✅ hanya 1 argumen
   clearAuth: () => void;
 };
 
@@ -23,11 +23,17 @@ const useAuthStore = create<
       user: null,
       token: null,
 
-      onSuccess: (user, token) =>
+      onSuccess: (user) => {
         set(() => ({
           user,
-          token,
-        })),
+          token: user.token,
+        }));
+
+        // simpan token manual ke localStorage kalau perlu akses langsung
+        if (user.token) {
+          localStorage.setItem("token", user.token);
+        }
+      },
 
       clearAuth: () =>
         set(() => ({

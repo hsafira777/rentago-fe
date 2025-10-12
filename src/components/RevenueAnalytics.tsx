@@ -19,20 +19,20 @@ type RevenueData = {
   projected: number;
 };
 
-type SummaryStats = {
-  totalProperties: number;
-  totalRooms: number;
-  totalReservations: number;
-};
+interface RevenueAnalyticsProps {
+  data: {
+    totalProperties: number;
+    totalRooms: number;
+    totalOrders: number;
+    totalRevenue: number;
+    properties: any[];
+  };
+}
 
-export default function RevenueAnalytics() {
-  const [data, setData] = useState<RevenueData[]>([]);
-  const [stats, setStats] = useState<SummaryStats>({
-    totalProperties: 0,
-    totalRooms: 0,
-    totalReservations: 0,
-  });
-
+export default function RevenueAnalytics({
+  data: stats,
+}: RevenueAnalyticsProps) {
+  const [chartData, setChartData] = useState<RevenueData[]>([]);
   const [mode, setMode] = useState<"yearly" | "monthly" | "daily">("yearly");
 
   const fetchRevenueStats = async (type: "yearly" | "monthly" | "daily") => {
@@ -62,7 +62,7 @@ export default function RevenueAnalytics() {
       if (!res.ok) throw new Error(`Failed to fetch ${type} stats`);
       const json = await res.json();
 
-      const chartData = json.data.map((item: any) => ({
+      const formattedData = json.data.map((item: any) => ({
         label:
           type === "yearly"
             ? `Bulan ${item.month}`
@@ -73,12 +73,7 @@ export default function RevenueAnalytics() {
         projected: item.projected,
       }));
 
-      setData(chartData);
-
-      // Summary (kalau kamu mau tampilkan total-total di stat cards)
-      if (json.summary) {
-        setStats(json.summary);
-      }
+      setChartData(formattedData);
     } catch (err) {
       console.error("Failed to fetch revenue stats:", err);
     }
@@ -99,33 +94,17 @@ export default function RevenueAnalytics() {
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <button
-            onClick={() => setMode("yearly")}
-            className={`px-3 py-1 border rounded-lg text-sm font-medium ${
-              mode === "yearly" ? "bg-blue-50 text-blue-600" : ""
-            }`}
-          >
-            Yearly
-          </button>
-          <button
-            onClick={() => setMode("monthly")}
-            className={`px-3 py-1 border rounded-lg text-sm font-medium ${
-              mode === "monthly" ? "bg-blue-50 text-blue-600" : ""
-            }`}
-          >
-            Monthly
-          </button>
-          <button
-            onClick={() => setMode("daily")}
-            className={`px-3 py-1 border rounded-lg text-sm font-medium ${
-              mode === "daily" ? "bg-blue-50 text-blue-600" : ""
-            }`}
-          >
-            Daily
-          </button>
-          <button className="px-3 py-1 border rounded-lg text-sm font-medium flex items-center gap-1">
-            <TrendingUp size={14} /> Line Chart
-          </button>
+          {(["yearly", "monthly", "daily"] as const).map((t) => (
+            <button
+              key={t}
+              onClick={() => setMode(t)}
+              className={`px-3 py-1 border rounded-lg text-sm font-medium ${
+                mode === t ? "bg-blue-50 text-blue-600" : ""
+              }`}
+            >
+              {t[0].toUpperCase() + t.slice(1)}
+            </button>
+          ))}
           <button
             onClick={() => fetchRevenueStats(mode)}
             className="px-3 py-1 border rounded-lg text-sm font-medium flex items-center gap-1"
@@ -148,21 +127,22 @@ export default function RevenueAnalytics() {
           <p className="text-xl font-bold">{stats.totalRooms}</p>
         </div>
         <div className="p-4 border rounded-lg">
-          <p className="text-sm text-gray-500">Total Reservations</p>
+          <p className="text-sm text-gray-500">Total Orders</p>
           <p className="text-xl font-bold text-green-600">
-            {stats.totalReservations}
+            {stats.totalOrders}
           </p>
         </div>
         <div className="p-4 border rounded-lg">
-          <p className="text-sm text-gray-500">Variance</p>
-          <p className="text-xl font-bold text-green-500">+0.0%</p>
-          <span className="text-xs text-gray-400">Above target</span>
+          <p className="text-sm text-gray-500">Total Revenue</p>
+          <p className="text-xl font-bold text-orange-600">
+            Rp {stats.totalRevenue.toLocaleString("id-ID")}
+          </p>
         </div>
       </div>
 
       {/* Chart */}
       <ResponsiveContainer width="100%" height={300}>
-        <LineChart data={data}>
+        <LineChart data={chartData}>
           <CartesianGrid strokeDasharray="3 3" />
           <XAxis dataKey="label" />
           <YAxis />

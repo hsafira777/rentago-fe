@@ -1,32 +1,17 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
-import useAuthStore from "@/store/useAuthStore";
-
+import { useState } from "react";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import Input from "@/components/ui/input";
 import Button from "@/components/ui/button";
 import CardBox from "@/components/ui/cardbox";
+import { useHydratedAuth } from "@/hooks/useHydratedAuth";
 
 export default function ProfilePage() {
-  const { user } = useAuthStore();
-  const hasHydrated = useAuthStore.persist.hasHydrated();
-  const router = useRouter();
+  const { hydrated, user } = useHydratedAuth("/auth"); // redirect ke /auth kalau belum login
+  const [form, setForm] = useState({ firstName: "", lastName: "" });
 
-  const [form, setForm] = useState({
-    firstName: "",
-    lastName: "",
-  });
-
-  // 🔹 Redirect jika belum login
-  useEffect(() => {
-    if (hasHydrated && !user) {
-      router.push("/auth");
-    }
-  }, [user, hasHydrated, router]);
-
-  if (!hasHydrated) return <PageState message="Loading..." />;
+  if (!hydrated) return <PageState message="Loading..." />;
   if (!user) return <PageState message="Redirecting..." />;
 
   return (
@@ -42,12 +27,10 @@ export default function ProfilePage() {
   );
 }
 
-/* 🔹 State halaman (loading / redirect) */
 function PageState({ message }: { message: string }) {
   return <p className="p-6 text-gray-500">{message}</p>;
 }
 
-/* 🔹 Header Profil */
 function ProfileHeader({ user }: { user: any }) {
   return (
     <CardBox
@@ -77,7 +60,6 @@ function ProfileHeader({ user }: { user: any }) {
   );
 }
 
-/* 🔹 Tabs Profil */
 function ProfileTabs({
   form,
   setForm,
@@ -95,7 +77,6 @@ function ProfileTabs({
         <TabsTrigger value="email">Email</TabsTrigger>
       </TabsList>
 
-      {/* Basic Info */}
       <TabsContent value="basic" className="mt-6">
         <h3 className="text-lg font-semibold mb-4">Basic Information</h3>
         <div className="grid md:grid-cols-2 gap-4">
@@ -115,12 +96,10 @@ function ProfileTabs({
         <Button className="mt-6 w-full md:w-auto">Update Profile</Button>
       </TabsContent>
 
-      {/* Avatar */}
       <TabsContent value="avatar" className="mt-6">
         <p className="text-gray-500">Avatar settings coming soon...</p>
       </TabsContent>
 
-      {/* Email */}
       <TabsContent value="email" className="mt-6">
         <p className="text-gray-500">Email settings coming soon...</p>
       </TabsContent>
@@ -128,7 +107,6 @@ function ProfileTabs({
   );
 }
 
-/* 🔹 Box Statistik */
 function StatBox({
   value,
   label,

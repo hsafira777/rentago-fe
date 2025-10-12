@@ -7,7 +7,6 @@ import { Home, Calendar, DollarSign, Bed } from "lucide-react";
 import HeaderBar from "@/components/HeaderBar";
 import StatCard from "@/components/StatCard";
 import RevenueAnalytics from "@/components/RevenueAnalytics";
-import PropertySection from "@/components/PropertySection";
 import useAuthStore from "@/store/useAuthStore";
 
 import { fetchTenantDashboard } from "@/lib/api/dashboard";
@@ -117,9 +116,6 @@ export default function DashboardPage() {
 
       {/* 📈 Revenue Analytics */}
       <RevenueAnalytics data={stats} />
-
-      {/* 🏠 Property Section */}
-      <PropertySection properties={stats.properties ?? []} />
     </div>
   );
 }

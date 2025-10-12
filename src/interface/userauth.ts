@@ -1,4 +1,5 @@
 export interface UserAuth {
+  id?: string;
   name: string;
   email: string;
   role: "USER" | "TENANT";

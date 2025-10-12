@@ -3,19 +3,24 @@
 import { useForm } from "react-hook-form";
 import useAuthStore from "@/store/useAuthStore";
 import { UserAuth } from "@/interface/userauth";
+import { Role } from "@/types/user"; // pastikan Role diimport
 
 type LoginValues = {
   email: string;
   password: string;
 };
 
+type LoginFormProps = {
+  role: Role;
+  onSuccess: (msg: string, user: UserAuth, token?: string) => void;
+  onError: (msg: string) => void;
+};
+
 export default function LoginForm({
+  role,
   onSuccess,
   onError,
-}: {
-  onSuccess: (msg: string, user: UserAuth) => void;
-  onError: (msg: string) => void;
-}) {
+}: LoginFormProps) {
   const { register, handleSubmit, reset } = useForm<LoginValues>();
   const { onSuccess: setAuth } = useAuthStore();
 
@@ -24,7 +29,7 @@ export default function LoginForm({
       const res = await fetch("http://localhost:8080/api/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
+        body: JSON.stringify({ ...data, role }), // role ikut dikirim ke backend
       });
 
       const result = await res.json();
@@ -38,7 +43,7 @@ export default function LoginForm({
       };
 
       setAuth(userData);
-      onSuccess("Login berhasil!", userData);
+      onSuccess("Login berhasil!", userData, result.token);
       reset();
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : "Terjadi error";
