@@ -26,48 +26,60 @@ export default function PropertyList() {
   }, []);
 
   if (loading) {
-    return <p className="text-gray-500">Loading properties...</p>;
+    return (
+      <p className="text-gray-500 text-center mt-6">Loading properties...</p>
+    );
   }
 
   return (
     <section className="mt-12">
-      <h2 className="text-2xl font-bold mb-6">Properti Tersedia</h2>
-      <div className="grid md:grid-cols-3 gap-6">
+      <h2 className="text-2xl font-bold mb-8 text-center">
+        Available Properties
+      </h2>
+      <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
         {properties.map((p) => (
           <div
             key={p.id}
-            className="border rounded-xl p-4 shadow hover:shadow-lg transition"
+            className="group bg-white rounded-2xl shadow-md hover:shadow-2xl transition overflow-hidden flex flex-col"
           >
-            {/* gambar (ambil dari property.pictures[0]) */}
-            <div className="h-40 bg-gray-200 rounded-lg mb-4 flex items-center justify-center overflow-hidden">
+            {/* Image Section */}
+            <div className="relative aspect-[4/3] w-full overflow-hidden">
               {p.pictures && p.pictures.length > 0 ? (
                 <img
                   src={p.pictures[0].url}
                   alt={p.name}
-                  className="w-full h-full object-cover"
+                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                 />
               ) : (
-                <span className="text-gray-500">No Image</span>
+                <div className="w-full h-full flex items-center justify-center bg-gray-200 text-gray-500 text-sm">
+                  No Image
+                </div>
+              )}
+              {p.price && (
+                <div className="absolute bottom-2 right-2 bg-blue-600 text-white text-xs font-semibold px-3 py-1 rounded-full shadow">
+                  Rp {p.price.toLocaleString()} / night
+                </div>
               )}
             </div>
 
-            <h3 className="text-lg font-semibold">{p.name}</h3>
-            <p className="text-sm text-gray-600">
-              {p.city}, {p.province}
-            </p>
-            {p.price ? (
-              <p className="text-blue-600 font-bold">
-                Rp {p.price.toLocaleString()} / malam
+            {/* Content */}
+            <div className="p-5 flex flex-col flex-1">
+              <h3 className="text-lg font-semibold mb-1 group-hover:text-blue-600 transition">
+                {p.name}
+              </h3>
+              <p className="text-sm text-gray-600 mb-3">
+                {p.city}, {p.province}
               </p>
-            ) : (
-              <p className="text-gray-500">Harga belum tersedia</p>
-            )}
-            <button
-              onClick={() => router.push(`/properties/${p.id}`)}
-              className="mt-3 w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700"
-            >
-              Lihat Detail
-            </button>
+
+              <div className="mt-auto">
+                <button
+                  onClick={() => router.push(`/properties/${p.id}`)}
+                  className="w-full bg-blue-600 text-white py-2 rounded-lg font-medium hover:bg-blue-700 transition"
+                >
+                  See Details
+                </button>
+              </div>
+            </div>
           </div>
         ))}
       </div>

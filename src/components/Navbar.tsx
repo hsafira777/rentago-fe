@@ -1,34 +1,66 @@
 "use client";
+
 import Link from "next/link";
+import useAuthStore from "@/store/useAuthStore";
 
 export default function Navbar() {
+  const { user, clearAuth } = useAuthStore();
+
   return (
     <nav className="bg-white shadow-md">
       <div className="max-w-6xl mx-auto px-4 py-3 flex justify-between items-center">
+        {/* Logo / Brand */}
         <h1 className="text-2xl font-bold text-blue-600">Rentago</h1>
+
+        {/* Menu */}
         <div className="flex items-center space-x-6">
           <ul className="flex space-x-6">
             <li>
-              <Link href="/">Home</Link>
+              <Link href="/" className="hover:text-blue-600 transition">
+                Home
+              </Link>
             </li>
             <li>
-              <Link href="/properties">Properties</Link>
-            </li>
-            <li>
-              <Link href="/about">About</Link>
-            </li>
-            <li>
-              <Link href="/contact">Contacts</Link>
+              <Link
+                href="/properties"
+                className="hover:text-blue-600 transition"
+              >
+                Properties
+              </Link>
             </li>
           </ul>
-          <Link
-            href="/auth/login"
-            className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition"
-          >
-            Login
-          </Link>
+
+          {/* Auth Section */}
+          {user ? (
+            <div className="flex items-center space-x-4">
+              <span className="font-medium">Hi, {user.name}</span>
+
+              {/* Dashboard Button */}
+              <Link
+                href="/dashboard"
+                className="bg-blue-600 px-4 py-2 rounded-lg hover:bg-blue-700 transition text-white"
+              >
+                Dashboard
+              </Link>
+
+              <button
+                onClick={clearAuth}
+                className="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 transition"
+              >
+                Logout
+              </button>
+            </div>
+          ) : (
+            <Link
+              href="/auth/login"
+              className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition"
+            >
+              Login
+            </Link>
+          )}
         </div>
       </div>
     </nav>
   );
 }
+

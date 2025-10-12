@@ -1,30 +1,67 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import CardBox from "@/components/ui/cardbox";
 import Button from "@/components/ui/button";
-import AuthForm from "@/components/AuthForm";
 import { Role, Mode } from "@/types/user";
+import { UserAuth } from "@/interface/userauth";
+import LoginForm from "@/components/auth/LoginForm";
+import RegisterForm from "@/components/auth/RegisterForm";
+import useAuthStore from "@/store/useAuthStore";
 
 export default function AuthPage() {
-  const [role, setRole] = useState<Role>("user");
+  const [role, setRole] = useState<Role>("USER");
   const [mode, setMode] = useState<Mode>("login");
-  const [error, setError] = useState("");
-  const [successMessage, setSuccessMessage] = useState("");
+  const [message, setMessage] = useState<{ error?: string; success?: string }>(
+    {}
+  );
 
-  const resetMessages = () => {
-    setError("");
-    setSuccessMessage("");
+  const router = useRouter();
+  const { onSuccess } = useAuthStore();
+
+  const resetMessages = () => setMessage({});
+
+  const handleSwitch = (type: "role" | "mode", value: Role | Mode) => {
+    resetMessages();
+    type === "role" ? setRole(value as Role) : setMode(value as Mode);
   };
 
-  const handleChangeRole = (newRole: Role) => {
-    setRole(newRole);
-    resetMessages();
+  const titles: Record<Mode, string> = {
+    login: "Login",
+    register: "Register",
   };
 
-  const handleChangeMode = (newMode: Mode) => {
-    setMode(newMode);
-    resetMessages();
+  const toggleConfig =
+    mode === "login"
+      ? { text: "Belum punya akun?", action: "Register", to: "register" }
+      : { text: "Sudah punya akun?", action: "Login", to: "login" };
+
+  // 🔐 Redirect berdasarkan role setelah login sukses
+  const roleRedirect: Record<Role, string> = {
+    USER: "/profile",
+    TENANT: "/dashboard",
+  };
+
+  const handleSuccess = (msg: string, userData: UserAuth, token?: string) => {
+    setMessage({ success: msg });
+
+    // simpan token kalau ada
+    if (token) {
+      localStorage.setItem("token", token);
+    }
+
+    // simpan user ke Zustand
+    onSuccess(userData);
+
+    if (mode === "login") {
+      const redirectPath = roleRedirect[userData.role] || "/";
+      router.push(redirectPath);
+    }
+  };
+
+  const handleError = (msg: string) => {
+    setMessage({ error: msg });
   };
 
   return (
@@ -32,76 +69,76 @@ export default function AuthPage() {
       <CardBox className="space-y-6">
         {/* Judul */}
         <h2 className="text-2xl font-bold text-center text-blue-600">
-          {mode === "login" ? "Login" : "Register"}{" "}
-          {role === "user" ? "User" : "Tenant"}
+          {titles[mode]} {role === "USER" ? "User" : "Tenant"}
         </h2>
 
         {/* Switch role */}
         <div className="flex justify-center space-x-4">
-          <Button
-            type="button"
-            variant="secondary"
-            active={role === "user"}
-            onClick={() => handleChangeRole("user")}
-          >
-            User
-          </Button>
-          <Button
-            type="button"
-            variant="secondary"
-            active={role === "tenant"}
-            onClick={() => handleChangeRole("tenant")}
-          >
-            Tenant
-          </Button>
+          {(["USER", "TENANT"] as Role[]).map((r) => (
+            <Button
+              key={r}
+              type="button"
+              variant="secondary"
+              active={role === r}
+              onClick={() => handleSwitch("role", r)}
+            >
+              {r === "USER" ? "User" : "Tenant"}
+            </Button>
+          ))}
         </div>
 
-        {/* Error */}
-        {error && (
-          <p className="text-red-500 text-center font-medium">{error}</p>
+        {/* Messages */}
+        {message.error && (
+          <p className="text-red-500 text-center font-medium">
+            {message.error}
+          </p>
         )}
-
-        {/* Success */}
-        {successMessage && (
+        {message.success && (
           <p className="text-green-600 text-center font-medium">
-            {successMessage}
+            {message.success}
           </p>
         )}
 
-        {/* Form di-extract ke komponen AuthForm */}
-        <AuthForm
-          role={role}
-          mode={mode}
-          onSuccess={(msg) => setSuccessMessage(msg)}
-          onError={(msg) => setError(msg)}
-        />
+        {/* Form login / register */}
+        {mode === "login" ? (
+          <LoginForm
+            role={role}
+            onSuccess={handleSuccess}
+            onError={handleError}
+          />
+        ) : (
+          <RegisterForm
+            role={role}
+            onSuccess={handleSuccess}
+            onError={handleError}
+          />
+        )}
 
         {/* Toggle mode */}
-        <p className="text-sm text-center">
-          {mode === "login" ? (
-            <>
-              Belum punya akun?{" "}
+        <div className="space-y-2 text-center">
+          <p className="text-sm">
+            {toggleConfig.text}{" "}
+            <button
+              type="button"
+              onClick={() => handleSwitch("mode", toggleConfig.to as Mode)}
+              className="text-blue-600 hover:underline"
+            >
+              {toggleConfig.action}
+            </button>
+          </p>
+
+          {mode === "login" && (
+            <p className="text-sm">
               <button
                 type="button"
-                onClick={() => handleChangeMode("register")}
+                onClick={() => router.push("/auth/reset-password")}
                 className="text-blue-600 hover:underline"
               >
-                Register
+                Lupa password?
               </button>
-            </>
-          ) : (
-            <>
-              Sudah punya akun?{" "}
-              <button
-                type="button"
-                onClick={() => handleChangeMode("login")}
-                className="text-blue-600 hover:underline"
-              >
-                Login
-              </button>
-            </>
+            </p>
           )}
-        </p>
+        </div>
       </CardBox>
     </div>
   );

@@ -1,3 +1,5 @@
+import type Room from "./room";
+
 export default interface Property {
   id: string;
   name: string;
@@ -6,4 +8,6 @@ export default interface Property {
   description: string;
   price?: number | null;
   pictures: { url: string }[];
+  category?: { id: string; name: string };
+  rooms?: Room[];
 }

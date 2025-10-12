@@ -10,114 +10,142 @@ import "swiper/css/pagination";
 
 import type Property from "@/interface/property";
 import type Room from "@/interface/room";
-import { Users } from "lucide-react";
+import BookingCalendar from "@/components/BookingCalendar";
 
+/* ------------------ Available Rooms ------------------ */
+function AvailableRooms({ rooms }: { rooms: Room[] }) {
+  if (!rooms || rooms.length === 0) {
+    return <p className="text-gray-500">Belum ada kamar tersedia.</p>;
+  }
+
+  return (
+    <ul className="space-y-4">
+      {rooms.map((room) => (
+        <li
+          key={room.id}
+          className="p-5 rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition bg-white"
+        >
+          <div className="flex items-start justify-between">
+            {/* LEFT: Room info */}
+            <div className="flex-1 pr-4">
+              <h3 className="text-lg font-semibold text-gray-900">
+                {room.name}
+              </h3>
+
+              {room.description && (
+                <p className="text-gray-600 text-sm leading-relaxed mt-1">
+                  {room.description}
+                </p>
+              )}
+
+              <p className="text-sm text-gray-700 mt-2">
+                Harga dasar:{" "}
+                <span className="font-medium">
+                  Rp {room.basePrice.toLocaleString("id-ID")}
+                </span>
+              </p>
+            </div>
+
+            {/* RIGHT: Capacity */}
+            <div className="flex flex-col items-end gap-2 min-w-[120px]">
+              <span className="px-3 py-1 text-xs font-medium rounded-full bg-indigo-50 text-indigo-600">
+                Kapasitas {room.capacity} orang
+              </span>
+              <span className="px-3 py-1 text-xs font-medium rounded-full bg-green-50 text-green-600">
+                {room.capacity} slot
+              </span>
+            </div>
+          </div>
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+
+/* ------------------ Main Page ------------------ */
 export default function PropertyDetailPage() {
   const { id } = useParams();
   const [property, setProperty] = useState<Property | null>(null);
-  const [rooms, setRooms] = useState<Room[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     async function fetchProperty() {
       try {
         const res = await fetch(`http://localhost:8080/api/properties/${id}`);
-        if (!res.ok) throw new Error("Gagal fetch property");
+        if (!res.ok) throw new Error("Failed fetch property");
         const data = await res.json();
         const prop = data.property || data.data?.property || data.data || data;
-
         setProperty(prop);
-        setRooms(prop?.rooms || []);
       } catch (err) {
-        console.error("Failed to fetch property:", err);
+        console.error(err);
       } finally {
         setLoading(false);
       }
     }
-
     if (id) fetchProperty();
   }, [id]);
 
   if (loading)
-    return <p className="text-gray-500">Loading property details...</p>;
-  if (!property) return <p className="text-red-500">Property not found</p>;
+    return <p className="text-center mt-20 text-gray-500">Loading...</p>;
+  if (!property)
+    return <p className="text-center mt-20 text-red-500">Property not found</p>;
 
   return (
-    <section className="max-w-6xl mx-auto mt-12 px-4">
-      {/* Header */}
-      <div className="mb-10 text-center">
-        <h2 className="text-4xl font-extrabold text-gray-900 tracking-tight">
-          {property.name}
-        </h2>
-        <p className="text-lg text-gray-500 mt-2">
-          {property.city}, {property.province}
-        </p>
-        <div className="mt-4 mx-auto max-w-2xl">
+    <div className="max-w-7xl mx-auto px-6 py-10 grid grid-cols-1 lg:grid-cols-3 gap-8">
+      {/* LEFT content */}
+      <div className="lg:col-span-2 space-y-10">
+        {/* Hero image with title & location */}
+        <div className="relative w-full h-[500px] rounded-3xl overflow-hidden shadow-lg">
+          <Swiper
+            modules={[Navigation, Pagination]}
+            spaceBetween={10}
+            slidesPerView={1}
+            navigation
+            pagination={{ clickable: true }}
+            className="h-full"
+          >
+            {property.pictures?.map((pic, idx) => (
+              <SwiperSlide key={idx}>
+                <img
+                  src={pic.url}
+                  alt={`${property.name} image ${idx + 1}`}
+                  className="w-full h-full object-cover"
+                />
+              </SwiperSlide>
+            ))}
+          </Swiper>
+
+          {/* Overlay for name + location */}
+          <div className="absolute bottom-6 left-6 bg-black/60 backdrop-blur-sm px-6 py-4 rounded-xl">
+            <h1 className="text-3xl md:text-5xl font-bold text-white">
+              {property.name}
+            </h1>
+            <p className="text-white/90 mt-1">
+              {property.city}, {property.province}
+            </p>
+          </div>
+        </div>
+
+        {/* Description */}
+        <section>
+          <h2 className="text-2xl font-semibold mb-4">Deskripsi</h2>
           <p className="text-gray-700 leading-relaxed">
             {property.description}
           </p>
-        </div>
+        </section>
+
+        {/* Available rooms */}
+        <section>
+          <h2 className="text-2xl font-semibold mb-4">Kamar yang Tersedia</h2>
+          <AvailableRooms rooms={property.rooms || []} />
+        </section>
       </div>
 
-      {/* Swiper slider */}
-      <div className="mb-14 relative">
-        <Swiper
-          modules={[Navigation, Pagination]}
-          spaceBetween={16}
-          slidesPerView={1}
-          navigation
-          pagination={{ clickable: true }}
-          className="w-full h-[500px] rounded-2xl shadow-xl overflow-hidden"
-        >
-          {property.pictures?.map((pic, i) => (
-            <SwiperSlide key={i} className="relative">
-              <img
-                src={pic.url}
-                alt={`${property.name} - ${i + 1}`}
-                className="w-full h-[500px] object-cover"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-black/10 to-transparent" />
-            </SwiperSlide>
-          ))}
-        </Swiper>
-      </div>
-
-      {/* Room list */}
-      <div>
-        <h3 className="text-2xl font-bold mb-8 text-gray-900 border-l-4 border-blue-500 pl-3">
-          Kamar Tersedia
-        </h3>
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {rooms.map((room) => (
-            <div
-              key={room.id}
-              className="rounded-2xl bg-white border border-gray-100 shadow-md hover:shadow-xl hover:-translate-y-1 transition-all p-6"
-            >
-              <h4 className="text-xl font-semibold text-gray-900 mb-2">
-                {room.name}
-              </h4>
-              <p className="text-sm text-gray-600 mb-4">
-                {room.description || "Tidak ada deskripsi"}
-              </p>
-              <div className="flex items-center justify-between mb-3">
-                <span className="text-lg font-bold text-blue-600">
-                  Rp {room.basePrice.toLocaleString()}{" "}
-                  <span className="text-sm font-normal text-gray-500">
-                    / malam
-                  </span>
-                </span>
-                <span className="bg-blue-50 text-blue-700 text-xs font-medium px-3 py-1 rounded-full">
-                  <Users className="w-4 h-4 inline-block mr-1" />{" "}
-                  {room.capacity} orang
-                </span>
-              </div>
-              <button className="w-full mt-2 bg-blue-600 hover:bg-blue-700 text-white font-medium py-2.5 rounded-xl transition">
-                Pesan Sekarang
-              </button>
-            </div>
-          ))}
-        </div>
-      </div>
-    </section>
+      {/* RIGHT sidebar = Booking */}
+      <aside className="lg:col-span-1">
+        <BookingCalendar rooms={property.rooms || []} />
+      </aside>
+    </div>
   );
 }

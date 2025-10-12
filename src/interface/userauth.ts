@@ -1,12 +1,10 @@
 export interface UserAuth {
-  id: string;
   name: string;
   email: string;
-  role: "ORGANIZER" | "ATTENDEE";
+  role: "USER" | "TENANT";
   token: string;
 }
 
-interface AuthStore {
-  token: string;
-  role: string;
+export interface AuthStore {
+  user: UserAuth | null;
 }

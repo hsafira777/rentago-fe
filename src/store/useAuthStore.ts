@@ -4,10 +4,11 @@ import { UserAuth } from "../interface/userauth";
 
 type AuthState = {
   user: UserAuth | null;
+  token: string | null;
 };
 
 type AuthActions = {
-  onSuccess: (user?: UserAuth | null) => void;
+  onSuccess: (user: UserAuth, token: string) => void;
   clearAuth: () => void;
 };
 
@@ -15,19 +16,31 @@ type AuthStore = AuthState & AuthActions;
 
 const useAuthStore = create<
   AuthStore,
-  [["zustand/persist", Pick<AuthStore, "user">]]
+  [["zustand/persist", Pick<AuthStore, "user" | "token">]]
 >(
   persist(
     (set) => ({
       user: null,
-      onSuccess: (payload) => set(() => ({ user: payload })),
-      clearAuth: () => set(() => ({ user: null })),
+      token: null,
+
+      onSuccess: (user, token) =>
+        set(() => ({
+          user,
+          token,
+        })),
+
+      clearAuth: () =>
+        set(() => ({
+          user: null,
+          token: null,
+        })),
     }),
     {
       name: "auth-storage",
       storage: createJSONStorage(() => localStorage),
       partialize: (state) => ({
         user: state.user,
+        token: state.token,
       }),
     }
   )
