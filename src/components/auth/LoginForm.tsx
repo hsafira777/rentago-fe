@@ -36,6 +36,7 @@ export default function LoginForm({
       if (!res.ok) throw new Error(result.message);
 
       const userData: UserAuth = {
+        id: result.user.id,
         name: result.user.name,
         email: result.user.email,
         role: result.user.role,

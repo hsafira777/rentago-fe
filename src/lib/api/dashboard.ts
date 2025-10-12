@@ -1,7 +1,7 @@
 export async function fetchTenantDashboard() {
-  const userRaw = localStorage.getItem("user");
-  const user = userRaw ? JSON.parse(userRaw) : null;
-  const token = user?.token;
+  const authRaw = localStorage.getItem("auth-storage");
+  const parsed = authRaw ? JSON.parse(authRaw) : null;
+  const token = parsed?.state?.token;
 
   if (!token) {
     throw new Error("Token tidak ditemukan. Silakan login ulang.");

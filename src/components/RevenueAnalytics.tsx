@@ -12,6 +12,7 @@ import {
 } from "recharts";
 import { TrendingUp, RefreshCcw } from "lucide-react";
 import { useEffect, useState } from "react";
+import useAuthStore from "@/store/useAuthStore";
 
 type RevenueData = {
   label: string;
@@ -35,6 +36,9 @@ export default function RevenueAnalytics({
   const [chartData, setChartData] = useState<RevenueData[]>([]);
   const [mode, setMode] = useState<"yearly" | "monthly" | "daily">("yearly");
 
+  // ⬇️ Ambil token langsung dari Zustand store
+  const token = useAuthStore((state) => state.token);
+
   const fetchRevenueStats = async (type: "yearly" | "monthly" | "daily") => {
     try {
       let url = `http://localhost:8080/api/revenue/${type}`;
@@ -48,9 +52,6 @@ export default function RevenueAnalytics({
           now.getMonth() + 1
         }&day=${now.getDate()}`;
       }
-
-      const user = JSON.parse(localStorage.getItem("user") || "{}");
-      const token = user?.token;
 
       const res = await fetch(url, {
         credentials: "include",
@@ -80,8 +81,10 @@ export default function RevenueAnalytics({
   };
 
   useEffect(() => {
-    fetchRevenueStats(mode);
-  }, [mode]);
+    if (token) {
+      fetchRevenueStats(mode);
+    }
+  }, [mode, token]);
 
   return (
     <div className="bg-white rounded-2xl shadow-md p-6">
@@ -135,7 +138,7 @@ export default function RevenueAnalytics({
         <div className="p-4 border rounded-lg">
           <p className="text-sm text-gray-500">Total Revenue</p>
           <p className="text-xl font-bold text-orange-600">
-            Rp {stats.totalRevenue.toLocaleString("id-ID")}
+            Rp {stats?.totalRevenue?.toLocaleString("id-ID") ?? 0}
           </p>
         </div>
       </div>

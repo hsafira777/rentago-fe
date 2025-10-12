@@ -5,41 +5,38 @@ import { UserAuth } from "../interface/userauth";
 type AuthState = {
   user: UserAuth | null;
   token: string | null;
+  userId: string | null;
 };
 
 type AuthActions = {
-  onSuccess: (user: UserAuth) => void; // ✅ hanya 1 argumen
+  onSuccess: (user: UserAuth) => void;
   clearAuth: () => void;
 };
 
 type AuthStore = AuthState & AuthActions;
 
-const useAuthStore = create<
-  AuthStore,
-  [["zustand/persist", Pick<AuthStore, "user" | "token">]]
->(
+const useAuthStore = create<AuthStore>()(
   persist(
     (set) => ({
       user: null,
       token: null,
+      userId: null,
 
       onSuccess: (user) => {
-        set(() => ({
+        set({
           user,
           token: user.token,
-        }));
-
-        // simpan token manual ke localStorage kalau perlu akses langsung
-        if (user.token) {
-          localStorage.setItem("token", user.token);
-        }
+          userId: user.id ?? null,
+        });
       },
 
-      clearAuth: () =>
-        set(() => ({
+      clearAuth: () => {
+        set({
           user: null,
           token: null,
-        })),
+          userId: null,
+        });
+      },
     }),
     {
       name: "auth-storage",
@@ -47,6 +44,7 @@ const useAuthStore = create<
       partialize: (state) => ({
         user: state.user,
         token: state.token,
+        userId: state.userId,
       }),
     }
   )
