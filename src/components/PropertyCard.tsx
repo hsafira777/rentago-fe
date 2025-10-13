@@ -9,12 +9,12 @@ export default function PropertyCard({ property }: { property: any }) {
       href={`/properties/${property.id}`}
       className="block rounded-2xl overflow-hidden border border-gray-200 shadow hover:shadow-md transition bg-white group"
     >
-      <div className="relative">
+      <div className="relative aspect-[4/3] w-full bg-gray-100">
         <Image
           src={property.pictures?.[0]?.url || "/placeholder.jpg"}
           alt={property.name}
-          width={400}
-          height={300}
+          fill
+          className="object-cover"
           unoptimized
         />
         {property.category?.name && (

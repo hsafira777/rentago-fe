@@ -22,7 +22,7 @@ export default function Navbar() {
             </li>
             <li>
               <Link
-                href="/properties"
+                href="/explore"
                 className="hover:text-blue-600 transition"
               >
                 Properties
@@ -34,6 +34,16 @@ export default function Navbar() {
           {user ? (
             <div className="flex items-center space-x-4">
               <span className="font-medium">Hi, {user.name}</span>
+
+              {/* Tenant Create Property Button */}
+              {user.role === "TENANT" && (
+                <Link
+                  href="/properties/create"
+                  className="bg-green-600 px-4 py-2 rounded-lg hover:bg-green-700 transition text-white"
+                >
+                  Create Property
+                </Link>
+              )}
 
               {/* Dashboard Button */}
               <Link
@@ -63,4 +73,3 @@ export default function Navbar() {
     </nav>
   );
 }
-
